@@ -1,12 +1,10 @@
-# 🏡 LendLens — Home Loan Decision Support System
+# 🏡 Homeloan IQ — Home Loan Decision Support System
 
 **An explainable, data-driven home loan review demo built with Python, Flask, and Google BigQuery.**
 
-LendLens demonstrates how a bank can streamline home loan application reviews by combining applicant information, repayment history, simulated credit bureau data, property checks, and affordability rules into a single review dashboard.
+Homeloan IQ demonstrates how a bank can streamline home loan application reviews by combining applicant information, repayment history, simulated credit bureau data, property checks, and affordability rules into a single review dashboard.
 
 Rather than making an automated lending decision, the system provides transparent recommendations and supporting reasons to help a credit officer review each application.
-
-> **Disclaimer:** This is an educational prototype using synthetic applicant data, simulated credit bureau and property-check data, and illustrative policy thresholds. It is not a production banking system, and recommendations are not actual loan sanctions.
 
 ## ✨ Key Features
 
@@ -222,4 +220,3 @@ GitHub: [@pakku251201](https://github.com/pakku251201)
 
 ---
 
-*LendLens is a portfolio project demonstrating data integration, explainable business rules, workflow design, and human-in-the-loop decision support.*
