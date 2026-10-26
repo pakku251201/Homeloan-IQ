@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LoanPilot Autonomous</title>
+<style>
+:root{--bg:#f6f7f3;--card:#fff;--ink:#1c2a2e;--mute:#5d6b6f;--line:#d9dfdb;--brand:#0f4c4a;--soft:#e3f0ee;--ok:#1f7a4d;--warn:#b7791f;--bad:#b3402e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a1b;--card:#172426;--ink:#e6eeec;--mute:#9db0ad;--line:#2b3d3f;--brand:#5fc2b7;--soft:#1b3331;--ok:#5ac28f;--warn:#e0a63a;--bad:#e8806e}}
+:root[data-theme="dark"]{--bg:#101a1b;--card:#172426;--ink:#e6eeec;--mute:#9db0ad;--line:#2b3d3f;--brand:#5fc2b7;--soft:#1b3331;--ok:#5ac28f;--warn:#e0a63a;--bad:#e8806e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+.site-nav{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.site-nav a{color:var(--brand);text-decoration:none;border:1px solid var(--line);border-radius:7px;padding:6px 10px}.site-nav a:hover{background:var(--soft)}
+main{max-width:1200px;margin:auto;padding:20px 14px 60px}h1{font:700 1.7rem Georgia,serif;margin:0 0 4px}h3{margin:0 0 8px;font-size:1rem}
+.mute{color:var(--mute)}.small{font-size:.85rem}
+.layout{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:18px;margin-top:16px;align-items:start}.layout>*{min-width:0}@media(max-width:850px){.layout{grid-template-columns:minmax(0,1fr);gap:14px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+button,input{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+button{cursor:pointer;max-width:100%}button.go{background:var(--brand);color:var(--card);border-color:var(--brand);font-weight:600}button.on{background:var(--soft);border-color:var(--brand)}
+.data-actions{display:grid;gap:10px;margin:4px 0 14px}.data-actions-primary{display:flex;flex-wrap:wrap;gap:8px}.data-actions-secondary{display:flex;gap:8px}.data-actions-secondary button{width:100%;text-align:center}.upload-control{display:block;width:100%;max-width:100%;min-width:0;padding:8px;margin-top:8px;font-size:.88rem}.upload-control::file-selector-button{max-width:100%;font:inherit;margin-right:8px;padding:4px 8px}
+.feed{max-height:190px;overflow-y:auto;overflow-wrap:anywhere}.card{min-width:0}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.stat{min-width:0;overflow-wrap:anywhere}@media(max-width:1050px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}tr.row{cursor:pointer}tr.row:hover{background:var(--soft)}
+.scroll{overflow-x:auto;max-height:380px;overflow-y:auto}
+.Approve{color:var(--ok)}.Refer{color:var(--warn)}.Decline{color:var(--bad)}b.Approve,b.Refer,b.Decline{font-weight:700}
+.stats{display:flex;gap:10px;flex-wrap:wrap}.stat{flex:1;min-width:110px;background:var(--soft);border-radius:8px;padding:8px 12px}.stat b{font-size:1.4rem;display:block}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:10px}.bar div{height:100%;background:var(--brand)}
+.feed div{padding:3px 0;border-bottom:1px solid var(--line)}
+.workflow{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:7px;margin:14px 0;overflow-x:auto}.stage{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px;font-size:.82rem;min-width:120px}.stage b{display:block;color:var(--brand);margin-bottom:3px}.source-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0}.source{border:1px solid var(--line);border-radius:7px;padding:9px;font-size:.85rem}.source b{display:block;margin-bottom:3px}
+
+/* Final dashboard spacing pass */
+.stats {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 0;
+}
+.stats + .stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+.stat {
+  min-width: 0;
+  min-height: 112px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  overflow-wrap: break-word;
+  line-height: 1.45;
+}
+.stat b {
+  margin-top: 8px;
+  font-size: 1.65rem;
+  line-height: 1.2;
+}
+.bar {
+  margin-top: 16px;
+}
+.card {
+  min-width: 0;
+  padding: 16px;
+}
+@media (max-width: 1050px) {
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stats + .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .stats, .stats + .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { min-height: 96px; padding: 14px; }
+}
+</style></head><body><main>
+<h1>HomeLoan IQ</h1>
+<h2 class="mute">Smart home-loan assessment</h2>
+<nav class="site-nav"><a href="/">Loan review</a><a href="/approach">Approach</a><a href="/architecture">Architecture</a><a href="/about">About</a><a href="/faq">FAQ</a><a href="/contact">Contact</a></nav>
+<p class="mute">Home-loan demo: Deterministic checks and assess evidence and explain recommendations. An authorised credit officer retains the final decision.</p>
+<div class="workflow" aria-label="Home loan review stages"><div class="stage"><b>1 · Intake</b>Application data and completeness</div><div class="stage"><b>2 · KYC &amp; documents</b>Identity status and income mismatch</div><div class="stage"><b>3 · Credit</b>Bureau score and repayment history</div><div class="stage"><b>4 · Property</b>CERSAI charge and collateral checks</div><div class="stage"><b>5 · Affordability</b>FOIR, EMI and LTV policy rules</div><div class="stage"><b>6 · Officer review</b>Recommendation, reasons and logged decision</div></div>
+<div class="layout"><div id="left"></div><div id="right"></div></div></main>
+<script>
+// ---------- The bank policy book ----------
+// Fixed policies the agents apply. They are never edited in the app: the agents read them like a bank's policy library.
+// Why: the brief wants every decision to cite the policy it relied on. Thresholds are example bank policy; LTV bands follow RBI home loan norms.
+var policies = {
+  P1:{ref:"Credit Policy Section 3.1", text:"Bureau (CIBIL) score must be 700 or above."},
+  P2:{ref:"Credit Policy Section 4.2", text:"Total monthly EMIs after the new loan must not exceed 50% of monthly income (FOIR)."},
+  P3:{ref:"RBI LTV norms", text:"Loan up to ₹30 lakh: LTV up to 90%. ₹30 to 75 lakh: up to 80%. Above ₹75 lakh: up to 75%."},
+  P4:{ref:"Collateral Manual Section 2.4", text:"A property with an existing charge on CERSAI goes to legal review before sanction."},
+  P5:{ref:"Income Verification Section 6.3", text:"Income documents must match bank credits. Any mismatch goes to an officer."},
+  P6:{ref:"Credit Policy Section 3.4", text:"Three or more bounced payments in 12 months go to an officer."},
+  P7:{ref:"KYC Master Direction", text:"PAN and Aadhaar must be verified before any sanction."},
+  P8:{ref:"Data Quality Standard Section 1", text:"Missing, impossible or unusual data is never decided automatically. It goes to an officer."}
+};
+var RATE = 8.75; // assumed yearly interest rate for EMI
+
+// ---------- State ----------
+var rows = [];        // every applicant loaded so far
+var results = [];     // the agents' answer for each processed applicant
+var feed = [];        // latest agent actions, newest first
+var decisions = {};   // officer decisions by applicant id
+var done = 0;         // how many rows are processed
+var timer = null;     // the processing loop
+var filter = "All", selected = null, nextNumber = 1001;
+var portfolio = {};   // average and spread of each number column, used to spot unusual values
+
+// ---------- Helpers ----------
+function money(n){ return "₹" + Math.round(n).toLocaleString("en-IN"); }
+// Makes uploaded text safe to show. Why: files come from outside.
+function esc(t){ return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function isYes(v){ return ["yes","true","1","y"].indexOf(String(v).toLowerCase()) > -1; }
+// EMI formula: monthly payment for a loan.
+function emiFor(amount, years){ var r = RATE/1200, n = years*12, g = Math.pow(1+r, n); return amount*r*g/(g-1); }
+// Reverse EMI formula: biggest loan a monthly payment can carry. Used for counter-offers.
+function loanFor(emi, years){ var r = RATE/1200, n = years*12, g = Math.pow(1+r, n); return emi*(g-1)/(r*g); }
+
+// ---------- Reading any file ----------
+// Different banks name columns differently. This maps common names to the ones the agents use, so no setup is needed.
+var aliases = {
+  id:["id","application_id","app_id"], name:["name","applicant","customer_name"], income:["income","monthly_income","salary"],
+  old_emi:["old_emi","existing_emi","emi","current_emi"], cibil:["cibil","credit_score","score","bureau_score"],
+  amount:["amount","loan_amount","requested_amount"], property:["property","property_value","collateral_value"],
+  years:["years","tenure","tenure_years"], charge:["charge","existing_charge","cersai_charge"], doc_issue:["doc_issue","document_issue","doc_note"],
+  bounces:["bounces","bounced_payments","cheque_bounces"], kyc_status:["kyc_status","kyc"]
+};
+function standardName(header){
+  var clean = header.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  for (var key in aliases) { if (aliases[key].indexOf(clean) > -1) return key; }
+  return clean;
+}
+function readCsv(text){
+  var lines = text.trim().split(/\r?\n/), names = lines[0].split(",").map(standardName), fresh = [];
+  for (var i = 1; i < lines.length; i++) {
+    var parts = lines[i].split(","), row = {};
+    for (var k = 0; k < names.length; k++) {
+      var v = (parts[k] || "").trim();
+      row[names[k]] = (v !== "" && !isNaN(Number(v))) ? Number(v) : v;
+    }
+    if (!row.id) row.id = "R" + (nextNumber++);
+    fresh.push(row);
+  }
+  addRows(fresh);
+}
+function onFile(input){
+  var reader = new FileReader();
+  reader.onload = function(){ readCsv(reader.result); };
+  reader.readAsText(input.files[0]);
+}
+// Makes pretend applicants, including a few messy ones, so the agents face unforeseen cases too.
+function generate(count){
+  var fresh = [], kinds = ["salaried","salaried","salaried","self-employed","government"];
+  for (var i = 0; i < count; i++) {
+    var income = 30000 + Math.floor(Math.random()*170000);
+    var amount = Math.round(income*(40+Math.random()*90)/50000)*50000;
+    var property = Math.round(amount/(0.55+Math.random()*0.4)/50000)*50000;
+    var row = {id:"A" + (nextNumber++), name:"Applicant " + (nextNumber-1000), income:income, old_emi:Math.round(income*Math.random()*0.3),
+      cibil:600+Math.floor(Math.random()*250), amount:amount, property:property, years:[10,15,20,25][Math.floor(Math.random()*4)],
+      charge:Math.random()<0.08?"yes":"no", doc_issue:Math.random()<0.07?"Salary slip does not match bank credits":"",
+      bounces:Math.random()<0.15?Math.floor(Math.random()*6):0, kyc_status:Math.random()<0.04?"pending":"verified", employer_type:kinds[Math.floor(Math.random()*5)]};
+    var mess = Math.random();
+    if (mess < 0.015) row.income = income*9;        // unusual value
+    else if (mess < 0.03) row.cibil = "";           // missing value
+    else if (mess < 0.04) row.property = amount/2;  // impossible: loan bigger than property
+    fresh.push(row);
+  }
+  addRows(fresh);
+}
+
+// ---------- Autonomous processing ----------
+// New rows join the queue and the agents start straight away. No button needed.
+function addRows(fresh){
+  rows = rows.concat(fresh);
+  measurePortfolio();
+  if (!timer) timer = setInterval(step, 90);
+}
+// Works out the normal range of every number column. Why: this is how the agents notice values nobody wrote a rule for.
+function measurePortfolio(){
+  portfolio = {};
+  var skip = ["id","years"];
+  Object.keys(rows[0] || {}).forEach(function(col){
+    if (skip.indexOf(col) > -1) return;
+    var nums = rows.map(function(r){ return r[col]; }).filter(function(v){ return typeof v === "number"; });
+    if (nums.length < 30) return; // too few rows to know what is normal
+    var mean = nums.reduce(function(a,b){ return a+b; }, 0) / nums.length;
+    var spread = Math.sqrt(nums.reduce(function(a,b){ return a+(b-mean)*(b-mean); }, 0) / nums.length);
+    portfolio[col] = {mean:mean, spread:spread};
+  });
+}
+// Handles a batch of 12 applicants per tick so large files do not freeze the page.
+function step(){
+  var end = Math.min(done + 12, rows.length);
+  for (var i = done; i < end; i++) {
+    var r = evaluate(rows[i]);
+    results.push(r);
+    feed.unshift("Policy agent: " + r.id + " → " + r.outcome);
+  }
+  feed = feed.slice(0, 8);
+  done = end;
+  if (done >= rows.length) { clearInterval(timer); timer = null; }
+  draw();
+}
+
+// ---------- The agents ----------
+// Each check records what it saw, why it passed or failed and which policy it used.
+function evaluate(a){
+  var checks = [], flags = [], trace = [];
+  // Intake agent: are the needed fields present and believable?
+  var needed = ["income","cibil","amount","property","years"], missing = needed.filter(function(f){ return typeof a[f] !== "number"; });
+  var impossible = [];
+  if (typeof a.cibil === "number" && (a.cibil < 300 || a.cibil > 900)) impossible.push("score outside 300 to 900");
+  if (typeof a.amount === "number" && typeof a.property === "number" && a.amount > a.property) impossible.push("loan is larger than property value");
+  if (typeof a.years === "number" && (a.years < 1 || a.years > 30)) impossible.push("tenure outside 1 to 30 years");
+  if (typeof a.income === "number" && a.income <= 0) impossible.push("income is zero or negative");
+  var odd = [];
+  Object.keys(portfolio).forEach(function(col){
+    var v = a[col], p = portfolio[col];
+    if (typeof v === "number" && p.spread > 0 && Math.abs(v - p.mean)/p.spread > 4) odd.push(col + " = " + v + " is far outside the usual range");
+  });
+  trace.push("Intake agent: " + (missing.length ? "missing " + missing.join(", ") : "all key fields present") + (impossible.length ? "; impossible: " + impossible.join(", ") : "") + (odd.length ? "; unusual: " + odd.join(", ") : "") + ".");
+  if (missing.length || impossible.length || odd.length) {
+    flags.push({name:"Data needs a human check", why:[].concat(missing.length ? ["Missing: " + missing.join(", ")] : [], impossible, odd).join("; "), p:"P8"});
+    return finish(a, checks, flags, trace, null, null, null);
+  }
+  var kyc = String(a.kyc_status || "verified").toLowerCase();
+  if (kyc !== "verified") flags.push({name:"KYC not verified", why:"KYC status is " + kyc, p:"P7"});
+  if (a.doc_issue) flags.push({name:"Document mismatch", why:a.doc_issue, p:"P5"});
+  trace.push("Document check: KYC " + kyc + (a.doc_issue ? ", income document problem found" : ", documents consistent") + ".");
+
+  // Data agent: bureau, collateral, payment history.
+  var bounces = typeof a.bounces === "number" ? a.bounces : 0;
+  if (isYes(a.charge)) flags.push({name:"Existing charge on property", why:"CERSAI shows a prior charge", p:"P4"});
+  if (bounces >= 3) flags.push({name:"Payment bounces", why:bounces + " bounced payments", p:"P6"});
+  trace.push("Data agent: bureau score " + a.cibil + ", " + bounces + " bounces, CERSAI " + (isYes(a.charge) ? "charge found" : "clear") + " (mock services).");
+
+  // Credit and policy agent: the hard checks.
+  var emi = emiFor(a.amount, a.years), foir = ((a.old_emi || 0) + emi) / a.income * 100, ltv = a.amount / a.property * 100;
+  var ltvLimit = a.amount <= 3000000 ? 90 : (a.amount <= 7500000 ? 80 : 75);
+  checks.push({name:"Credit score", ok:a.cibil >= 700, why:"Score " + a.cibil + " against minimum 700", p:"P1"});
+  checks.push({name:"Repayment burden (FOIR)", ok:foir <= 50, why:Math.round(foir) + "% of income against limit 50%. New EMI " + money(emi), p:"P2"});
+  checks.push({name:"Loan-to-value", ok:ltv <= ltvLimit, why:Math.round(ltv) + "% of property value against limit " + ltvLimit + "%", p:"P3"});
+  trace.push("Credit and policy agent: applied P1, P2, P3 and checked flags.");
+  var counter = null;
+  var failed = checks.filter(function(c){ return !c.ok; });
+  // A smaller loan fixes the problem only when repayment burden is the one failure.
+  if (failed.length === 1 && failed[0].p === "P2") counter = loanFor(0.5 * a.income - (a.old_emi || 0), a.years);
+  return finish(a, checks, flags, trace, emi, foir, counter);
+}
+// Decides the outcome: any failed hard check declines, any flag refers, otherwise approve.
+function finish(a, checks, flags, trace, emi, foir, counter){
+  var failed = checks.filter(function(c){ return !c.ok; });
+  var outcome = failed.length ? "Decline" : (flags.length ? "Refer" : "Approve");
+  trace.push("Recommendation: " + outcome + ". " + (outcome === "Approve" ? "Ready for officer sign-off." : "Reasons below."));
+  return {id:a.id, a:a, checks:checks, flags:flags, failed:failed, trace:trace, outcome:outcome, emi:emi, foir:foir, counter:counter};
+}
+
+// ---------- Officer ----------
+async function decide(id, choice){
+  // Update the local officer-decision state immediately so the dashboard counters refresh.
+  decisions[id] = choice;
+  feed.unshift("Officer decision: " + id + " → " + choice);
+  draw();
+  // Persist the decision and report failures instead of silently ignoring them.
+  try {
+    var response = await fetch("/api/decision", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id:id, choice:choice})});
+    if (!response.ok) {
+      var message = await response.text();
+      feed.unshift("Save failed for " + id + " (HTTP " + response.status + "): " + message);
+    } else {
+      feed.unshift("Saved officer decision for " + id + " to BigQuery.");
+    }
+  } catch (e) {
+    feed.unshift("Decision is shown locally but could not be saved: " + e.message);
+  }
+  draw();
+}
+// Asks the server for applicants from BigQuery. Returns true if it worked.
+async function loadBigQuery(){
+  try {
+    var reply = await fetch("/api/applicants");
+    if (!reply.ok || reply.status === 204) return false;
+    readCsv(await reply.text());
+    return true;
+  } catch (e) { return false; }
+}
+function pick(id){ selected = id; draw(); }
+function setFilter(f){ filter = f; draw(); }
+function reset(){ rows = []; results = []; feed = []; decisions = {}; done = 0; selected = null; clearInterval(timer); timer = null; draw(); }
+
+// ---------- Drawing ----------
+function drawLeft(){
+  var list = Object.keys(policies).map(function(k){ return "<div class='small' style='margin-bottom:6px'><b>" + policies[k].ref + "</b><br>" + policies[k].text + "</div>"; }).join("");
+  var feedHtml = feed.map(function(f){ return "<div>" + esc(f) + "</div>"; }).join("") || "<span class='mute'>Waiting for data.</span>";
+  return "<div class='card'><h3>Add data</h3><div class='data-actions'><div class='data-actions-primary'><button class='go' onclick='generate(200)'>Add 200 sample applicants</button><button onclick='reset()'>Clear</button></div><div class='data-actions-secondary'><button onclick='loadBigQuery()'>Load from BigQuery</button></div></div><p class='small mute'>Or upload a CSV. Common column names are recognised automatically, and extra columns are checked for unusual values.</p><input class='upload-control' type='file' accept='.csv' onchange='onFile(this)'></div>" +
+    "<div class='card'><h3>Agent activity</h3><div class='feed small'>" + feedHtml + "</div></div>" +
+    "<div class='card'><h3>Policy book used</h3>" + list + "</div>";
+}
+function drawRight(){
+  if (!rows.length) return "<div class='card'><h3>No applicants yet</h3><p class='mute'>Add data and the agents start immediately.</p></div>";
+  var count = function(o){ return results.filter(function(r){ return r.outcome === o; }).length; };
+  var attention = results.filter(function(r){ return r.outcome === "Refer" && !decisions[r.id]; }).length;
+  var officerCount = function(choice){ return Object.keys(decisions).filter(function(id){ return decisions[id] === choice; }).length; };
+  var percent = Math.round(done / rows.length * 100);
+  var stats = "<div class='stats'><div class='stat'>Processed<b>" + done + "/" + rows.length + "</b></div><div class='stat Approve'>Model recommends approve<b>" + count("Approve") + "</b></div><div class='stat Refer'>Model recommends refer<b>" + count("Refer") + "</b></div><div class='stat Decline'>Model recommends decline<b>" + count("Decline") + "</b></div><div class='stat'>Waiting for officer<b>" + attention + "</b></div></div><div class='stats'><div class='stat Approve'>Officer approved<b>" + officerCount("Approve") + "</b></div><div class='stat Refer'>Officer held/referred<b>" + officerCount("Refer") + "</b></div><div class='stat Decline'>Officer declined<b>" + officerCount("Decline") + "</b></div></div><div class='bar'><div style='width:" + percent + "%'></div></div>";
+  var buttons = ["All","Approve","Refer","Decline"].map(function(f){ return "<button class='" + (f === filter ? "on" : "") + "' onclick=\"setFilter('" + f + "')\">" + f + "</button>"; }).join(" ");
+  var shown = results.filter(function(r){ return filter === "All" || r.outcome === filter; }).slice(0, 200);
+  var body = shown.map(function(r){
+    var main = r.failed.length ? r.failed[0].name : (r.flags.length ? r.flags[0].name : "All checks passed");
+    return "<tr class='row' onclick=\"pick('" + esc(r.id) + "')\"><td>" + esc(r.id) + "</td><td>" + esc(r.a.name || "") + "</td><td>" + (typeof r.a.amount === "number" ? money(r.a.amount) : "") + "</td><td><b class='" + r.outcome + "'>" + r.outcome + "</b></td><td>" + esc(main) + "</td><td>" + (decisions[r.id] ? "Officer: " + decisions[r.id] : "") + "</td></tr>";
+  }).join("");
+  return "<div class='card'>" + stats + "</div><div class='card'><h3>Decisions</h3>" + buttons + "<p class='small mute'>Click a row for the full reasoning. Showing up to 200.</p><div class='scroll'><table><tr><th>ID</th><th>Name</th><th>Loan</th><th>Agents say</th><th>Main reason</th><th></th></tr>" + body + "</table></div></div>" + drawDetail();
+}
+function drawDetail(){
+  var r = results.filter(function(x){ return x.id === selected; })[0];
+  if (!r) return "";
+  var line = function(c, label, cls){ return "<tr><td>" + esc(c.name) + "</td><td class='" + cls + "'>" + label + "</td><td>" + esc(c.why) + "</td><td class='small'><b>" + policies[c.p].ref + "</b><br>" + policies[c.p].text + "</td></tr>"; };
+  var lines = r.checks.map(function(c){ return line(c, c.ok ? "Pass" : "Fail", c.ok ? "Approve" : "Decline"); }).join("") + r.flags.map(function(c){ return line(c, "Flag", "Refer"); }).join("");
+  var sources = [
+    {name:"Application / customer", fields:"Applicant ID, name, income, requested amount, property value, tenure"},
+    {name:"Account / repayments", fields:"Existing EMI and bounced-payment count"},
+    {name:"Bureau (mock)", fields:"Credit score; synthetic bureau data"},
+    {name:"CERSAI (mock)", fields:"Existing property charge indicator"},
+    {name:"Applicant CSV / BigQuery view", fields:"Values loaded for this case; uploaded CSVs use mapped column names"}
+  ].map(function(x){return "<div class='source'><b>"+esc(x.name)+"</b>"+esc(x.fields)+"</div>";}).join("");
+  var advice = r.outcome === "Approve" ? "All checks passed. Suggest sanction at " + money(r.a.amount) + ", EMI " + money(r.emi) + "." :
+    r.outcome === "Refer" ? "No hard failure, but an officer must resolve the flags." :
+    "Does not meet policy." + (r.counter ? " Counter-offer: " + money(r.counter) + ", the largest loan that keeps repayments within 50% of income." : "");
+  var id = esc(r.id);
+  return "<div class='card'><h3>Case " + id + ": <span class='" + r.outcome + "'>" + r.outcome + "</span></h3><p>" + advice + "</p><h3>Data provenance</h3><p class='small mute'>Logical sources used by this demo. Bureau and CERSAI are simulated. Confirm BigQuery is loaded before treating this as a live source trace.</p><div class='source-grid'>" + sources + "</div><h3>Workflow trace</h3><div class='small mute'>" + r.trace.map(esc).join("<br>") + "</div><div class='scroll'><table><tr><th>Check</th><th>Result</th><th>Why</th><th>Policy used</th></tr>" + lines + "</table></div>" +
+    "<p>Credit officer decision: <button class='go' onclick=\"decide('" + id + "','Approve')\">Approve</button> <button onclick=\"decide('" + id + "','Refer')\">Hold</button> <button onclick=\"decide('" + id + "','Decline')\">Decline</button></p></div>";
+}
+function draw(){
+  document.getElementById("left").innerHTML = drawLeft();
+  document.getElementById("right").innerHTML = drawRight();
+}
+draw();
+// On start, try BigQuery first. If there is no server, fall back to sample data so the demo is never empty.
+loadBigQuery().then(function(worked){ if (!worked) generate(300); });
+</script></body></html>
